@@ -17,6 +17,11 @@
         <div class="login">
             <div class="container-fluid">
                 <div class="row">
+                    {% for message in messages %}
+                    <div class="alert alert-danger" role="alert" style="width:400px;">
+                         <center> {{message}} </center>
+                    </div>
+                    {% endfor %}
                     <form method = "POST">
                         {% csrf_token %}
                     <div class="col-lg-6">
