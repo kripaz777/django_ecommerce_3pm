@@ -48,6 +48,7 @@ class SearchView(BaseView):
 class ProductDetailView(BaseView):
     def get(self,request,slug):
         self.views['product_detail'] = Product.objects.filter(slug = slug)
+        self.views['product_reviews'] = ProductReview.objects.filter(slug=slug)
         subcat_id = Product.objects.get(slug = slug).subcategory_id
         products_id  = Product.objects.get(slug = slug).id
         self.views['product_images'] = ProductImage.objects.filter(product_id = products_id)
@@ -57,7 +58,20 @@ class ProductDetailView(BaseView):
 
 
 def product_review(request,slug):
-
+    if request.method == 'POST':
+        username = request.user.username
+        email = request.user.email
+        star = request.POST['star']
+        comment = request.POST['comment']
+        data = ProductReview.objects.create(
+            name = username,
+            email = email,
+            star = star,
+            comment = comment,
+            slug = slug
+        )
+        data.save()
+        messages.error(request, 'The review is submitted!')
     return redirect(f'/product_detail/{slug}')
 
 def signup(request):
