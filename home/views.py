@@ -102,3 +102,42 @@ def signup(request):
             messages.error(request, 'The password does not match!')
             return redirect('/signup')
     return render(request,'signup.html')
+
+
+class CartView(BaseView):
+    def get(self,request):
+        username = request.user.username
+        self.views['cart_view'] = Cart.objects.filter(username = username)
+        return render(request,'cart.html',self.views)
+
+def add_to_cart(self,request,slug):
+    username = request.user.username
+    if Product.objects.filter(slug = slug).exists():
+        if Cart.objects.filter(slug = slug,checkout = False,username = username).exists():
+            quantity = Cart.objects.get(slug = slug,checkout = False,username = username).quantity
+            price = Product.objects.get(slug=slug).price
+            discounted_price = Product.objects.get(slug=slug).discounted_price
+            quantity = quantity + 1
+            if discounted_price > 0:
+                total = discounted_price*quantity
+            else:
+                total = price * quantity
+            Cart.objects.filter(slug=slug, checkout=False, username=username).update(total = total,quantity = quantity)
+        else:
+            price = Product.objects.get(slug=slug).price
+            discounted_price = Product.objects.get(slug=slug).discounted_price
+            if discounted_price > 0:
+                total = discounted_price
+            else:
+                total = price
+            data = Cart.objejects.create(
+                username = username,
+                slug = slug,
+                total = total,
+                items = Product.objects.get(slug=slug)
+            )
+            data.save()
+    else:
+        return redirect('/')
+
+    return redirect('/cart')
