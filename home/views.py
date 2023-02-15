@@ -110,7 +110,7 @@ class CartView(BaseView):
         self.views['cart_view'] = Cart.objects.filter(username = username)
         return render(request,'cart.html',self.views)
 
-def add_to_cart(self,request,slug):
+def add_to_cart(request,slug):
     username = request.user.username
     if Product.objects.filter(slug = slug).exists():
         if Cart.objects.filter(slug = slug,checkout = False,username = username).exists():
@@ -126,18 +126,46 @@ def add_to_cart(self,request,slug):
         else:
             price = Product.objects.get(slug=slug).price
             discounted_price = Product.objects.get(slug=slug).discounted_price
+
             if discounted_price > 0:
                 total = discounted_price
             else:
                 total = price
-            data = Cart.objejects.create(
+
+            data = Cart.objects.create(
                 username = username,
                 slug = slug,
                 total = total,
+                quantity = 1,
                 items = Product.objects.get(slug=slug)
             )
             data.save()
     else:
         return redirect('/')
 
+    return redirect('/cart')
+
+def reduce_quantity(request,slug):
+    username = request.user.username
+    if Product.objects.filter(slug=slug).exists():
+        if Cart.objects.filter(slug=slug, checkout=False, username=username).exists():
+            quantity = Cart.objects.get(slug=slug, checkout=False, username=username).quantity
+            price = Product.objects.get(slug=slug).price
+            discounted_price = Product.objects.get(slug=slug).discounted_price
+            if quantity >1:
+                quantity = quantity - 1
+                if discounted_price > 0:
+                    total = discounted_price * quantity
+                else:
+                    total = price * quantity
+                Cart.objects.filter(slug=slug, checkout=False, username=username).update(total=total, quantity=quantity)
+            else:
+                messages.error(request, 'The quantity is already 1.')
+
+    return redirect('/cart')
+
+def delete_cart(request,slug):
+    username = request.user.username
+    if Cart.objects.filter(slug=slug, checkout=False, username=username).exists():
+        Cart.objects.filter(slug=slug, checkout=False, username=username).delete()
     return redirect('/cart')
